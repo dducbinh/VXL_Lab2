@@ -231,7 +231,35 @@ static void MX_TIM2_Init(void);
 		ledBuffer[2] = minute / 10;
 		ledBuffer[3] = minute % 10;
 	}
+//-----------Ex8-----------------
+	int TIMER_CYCLE = 10;
 
+	int timer0_counter = 0;
+	int timer0_flag = 1;
+
+	void setTimer0(int duration) {
+		timer0_counter = duration / TIMER_CYCLE;
+		timer0_flag = 0;
+	}
+
+	int timer1_counter = 0;
+	int timer1_flag = 1;
+
+	void setTimer1(int duration) {
+		timer1_counter = duration / TIMER_CYCLE;
+		timer1_flag = 0;
+	}
+
+	void timerRun() {
+		if (timer0_counter > 0) {
+			timer0_counter--;
+			if (timer0_counter == 0) timer0_flag = 1;
+		}
+		if (timer1_counter > 0) {
+			timer1_counter--;
+			if (timer1_counter == 0) timer1_flag = 1;
+		}
+	}
 
 /* USER CODE END 0 */
 
@@ -273,27 +301,39 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int hour = 15, minute = 8, second = 50;
+  int hour = 8, minute = 26, second = 50;
+  int duration = 1000;
   while (1)
   {
-	  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
+	  //HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  second++;
-	  if (second >= 60) {
-		  second = 0;
-		  minute++;
+	  if (timer0_flag == 1) {
+		  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
+
+		  second++;
+		  if (second >= 60) {
+			  second = 0;
+			  minute++;
+		  }
+		  if (minute >= 60) {
+			  minute = 0;
+			  hour++;
+		  }
+		  if (hour >= 24) {
+			  hour = 0;
+		  }
+		  updateClockBuffer(hour, minute);
+
+		  setTimer0(duration);
 	  }
-	  if (minute >= 60) {
-		  minute = 0;
-		  hour++;
+	  if (timer1_flag == 1) {
+		  update7SEG(ledIdx++);
+		  if (!(ledIdx < MAX_LED)) ledIdx = 0;
+
+		  setTimer1(duration/MAX_LED);
 	  }
-	  if (hour >= 24) {
-		  hour = 0;
-	  }
-	  updateClockBuffer(hour, minute);
-	  HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -424,6 +464,8 @@ static void MX_GPIO_Init(void)
 const unsigned int scale = 100;
 int counter = scale;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	timerRun();
+	/*
 	if (counter == (scale)) {
 		update7SEG(ledIdx++);
 	} else if (counter == (scale * 3/4)) {
@@ -437,6 +479,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (!(ledIdx < MAX_LED)) ledIdx = 0;
 
 	counter = (counter > 0) ? counter - 1 : 200;
+	*/
 }
 /* USER CODE END 4 */
 
